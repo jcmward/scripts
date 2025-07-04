@@ -1,0 +1,13 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# Determine if running in WSL.
+
+is_wsl() {
+	[ -n "${WSL_DISTRO_NAME}" ] || \
+	[ -e "/proc/sys/fs/binfmt_misc/WSLInterop" ] || \
+	grep -qi "microsoft" /proc/version 2>/dev/null || \
+	grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null
+}
+
+is_wsl
+

@@ -1,0 +1,68 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Read the fine manual, if at all possible.
+
+rtfm() {
+	if [ $# -eq 0 ]; then
+		# Get the default error message for zero arguments
+		man
+		return 1
+	fi
+
+	for cmd in "$@"; do
+		# Try man
+		if man "$cmd" >/dev/null 2>&1; then
+			printf "Information found via 'man %s'.\n" "$cmd"
+			man "$cmd"
+			continue
+		else
+			  printf "No man page found for '%s'.\n" "$cmd"
+		fi
+
+		# Try info
+		tempfile=$(mktemp /tmp/rtfm_info.XXXXXX)
+		if info --output="$tempfile" "$cmd" >/dev/null 2>&1 && [ -s "$tempfile" ]; then
+			printf "\nInformation found via 'info %s'.\n" "$cmd"
+			${PAGER:-less} "$tempfile"
+			rm -f "$tempfile"
+			continue
+		else
+			rm -f "$tempfile"
+			printf "No info page found for '%s'.\n" "$cmd"
+		fi
+
+		# Try apropos
+		if apropos "$cmd" >/dev/null 2>&1; then
+			printf "\nPossibly relevant man pages for '%s':\n" "$cmd"
+			apropos "$cmd"
+			printf "\n"
+		else
+			printf "No relevant man pages found for '%s'.\n" "$cmd"
+		fi
+
+		# Try --help
+		# NOTE: this is naive and may run "successfully" for commands
+		# that take arbitrary arguments (e.g. this script itself),
+		# potentially producing garbage output rather than actual help.
+		if "$cmd" --help >/dev/null 2>&1; then
+			printf "\nInformation found via '%s --help'.\n" "$cmd"
+			"$cmd" --help | ${PAGER:-less}
+			continue
+		else
+			printf "No --help output for '%s'.\n" "$cmd"
+		fi
+
+		# # If all else fails, use 'type'
+		# if type "$cmd" >/dev/null 2>&1; then
+		#	printf "\n"
+		#	type "$cmd"
+		# else
+		#	printf "Command '%s' not found.\n\n" "$cmd"
+		# fi
+
+		printf "\n"
+	done
+}
+
+rtfm "$@"
+

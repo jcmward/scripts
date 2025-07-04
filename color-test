@@ -1,0 +1,78 @@
+#!/bin/bash
+# Jon Ward, 2024.
+# Output colors visible in terminal.
+# Based on:
+#	- https://gist.github.com/XVilka/8346728
+#	- https://unix.stackexchange.com/a/404415/395213
+
+color_sequence() {
+	if [ "$#" -ne 3 ]; then
+		printf "Usage: color_sequence <start> <end> <label>\n"
+		return 1
+	fi
+
+	start=$1
+	end=$2
+	label=$3
+
+	printf "\n%s\n" "$label"
+	for color in $(seq "$start" "$end"); do
+		printf "\033[${color}m%3d " "$color"
+	done
+	printf "\033(B\033[m\n"
+}
+
+color_test() {
+	if [[ $# -eq 0 ]]; then
+		height=1
+	else
+		if [[ "$1" =~ ^[0-9]+$ ]]; then
+			height="$1"
+		else
+			printf "Error: Argument (height) must be a positive integer\n" >&2
+			return 1
+		fi
+	fi
+
+	color_sequence 40 47 "ANSI standard colors"
+	color_sequence 100 107 "ANSI high intensity colors"
+
+	# # printf won't support this
+	# color_sequence 0 255 "ANSI 256 colors"
+
+	printf "\nANSI 256 colors\n"
+	for color in {0..255}; do
+		echo -en "\e[48;5;${color}m$color "
+	done
+	echo -e "\e(B\e[m"
+
+	printf "\ntput colors\n"
+	for color in {0..255}; do
+		tput setab $color
+		echo -n "$color "
+	done
+	tput sgr0
+	echo
+
+	printf "\nterminal colors\n"
+	awk -v term_cols="${width:-$(tput cols || echo 80)}" -v term_lines="${height:-1}" 'BEGIN{
+		s="/\\";
+		total_cols=term_cols*term_lines;
+		for (colnum = 0; colnum<total_cols; colnum++) {
+			r = 255-(colnum*255/total_cols);
+			g = (colnum*510/total_cols);
+			b = (colnum*255/total_cols);
+			if (g>255) g = 510-g;
+			printf "\033[48;2;%d;%d;%dm", r,g,b;
+			printf "\033[38;2;%d;%d;%dm", 255-r,255-g,255-b;
+			printf "%s\033[0m", substr(s,colnum%2+1,1);
+			if (colnum%term_cols==term_cols) printf "\n";
+		}
+		printf "\n";
+	}'
+
+	printf "\n"
+}
+
+color_test "$@"
+

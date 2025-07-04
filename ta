@@ -1,0 +1,42 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Attach to default tmux session, or initialize it if needed.
+
+ta() {
+	# Check environment
+	if ! command -v tmux >/dev/null 2>&1; then
+		return 1
+	elif [ -n "$TMUX" ]; then
+		return 1
+	fi
+
+	case "$TERM" in
+		*screen*|*tmux*|linux)
+			return 1
+			;;
+	esac
+
+	SESSION="default"
+
+	# If session does not exist, create it
+	if ! tmux has-session -t "$SESSION" >/dev/null 2>&1; then
+		# Note: base-index is 1
+		tmux new-session -d -s "$SESSION" -n "[Music]"
+		tmux send-keys -t "${SESSION}:1" "clear; cd ${FILES_DIR}/Music" C-m
+
+		tmux new-window -t "$SESSION" -n "[Notes]"
+		tmux send-keys -t "${SESSION}:2" "clear; n" C-m
+
+		tmux new-window -t "$SESSION" -n "[Code]"
+		tmux send-keys -t "${SESSION}:3" "clear; cd ${FILES_DIR}/Nextcloud/Code" C-m
+
+		tmux new-window -t "$SESSION" -n "[Shell]"
+		tmux send-keys -t "${SESSION}:4" "clear; cd ${FILES_DIR}" C-m
+	fi
+
+	# Attach to the session
+	exec tmux attach -t "${SESSION}:1"
+}
+
+ta
+

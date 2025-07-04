@@ -1,0 +1,60 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Set default permissions: 755 for directories, and 644 for files (umask 022).
+# Set to +x for any files beginning with a shebang (#!).
+
+has_shebang() {
+	[ -f "$1" ] || return 1
+	[ -r "$1" ] || return 1
+
+	# Check MIME type — must be text/* (e.g. text/x-shellscript, text/plain, etc.)
+	mime_type=$(file --mime-type -b "$1")
+
+	case "$mime_type" in
+		text/*)
+			IFS= read -r first_line < "$1"
+			case "$first_line" in
+				'#!'*) return 0 ;;
+			esac
+			;;
+	esac
+	return 1
+}
+
+sdp() {
+	# Validate given directory
+	TARGET_DIR="${1:-.}"
+	TARGET_DIR=$(realpath "$TARGET_DIR")
+
+	if [ ! -d "$TARGET_DIR" ]; then
+		printf "Error: '$TARGET_DIR' is not a valid directory.\n" >&2
+		return 1
+	fi
+
+	# Stop if given a critical system directory
+	critical_paths="/ /bin /boot /dev /etc /home /lib /lib64 /media /mnt /opt /proc /root /run /sbin /sys /tmp /usr /var"
+	for path in $critical_paths; do
+		if [ "$TARGET_DIR" = "$path" ]; then
+			printf "Error: Refusing to run on critical system directory '%s'.\n" "$TARGET_DIR" >&2
+			return 2
+		fi
+	done
+
+	printf "\nSetting directory permissions to 755 in '$TARGET_DIR'...\n"
+	find "$TARGET_DIR" -type d -exec chmod 755 {} +
+
+	printf "\nSetting file permissions to 644 in '$TARGET_DIR'...\n"
+	find "$TARGET_DIR" -type f -exec chmod 644 {} +
+
+	printf "\nSetting file permissions to +x for files with a shebang in '$TARGET_DIR'...\n"
+	find "$TARGET_DIR" -type f | while IFS= read -r file; do
+		if has_shebang "$file"; then
+			chmod +x "$file"
+		fi
+	done
+
+	printf "\nPermissions updated.\n"
+}
+
+sdp "$@"
+

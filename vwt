@@ -1,0 +1,16 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# Edit Windows Terminal configuration and preview colorschemes.
+
+vwt() {
+	# Microsoft stores WT config in a very convenient, memorable location (:
+	local files="/mnt/c/Users/${WIN_USERNAME:-jon}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
+	local colorscheme_list="$FILES_DIR/Nextcloud/Dotfiles/Windows/Terminal/colorschemes.txt"
+	if [ -f $colorscheme_list ]; then
+		files="$colorscheme_list $files"
+	fi
+	${EDITOR:-vim} -O2 -c "colorscheme default" -c "terminal" -c "call win_gotoid(win_getid(3))" $files
+}
+
+vwt
+

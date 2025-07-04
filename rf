@@ -1,0 +1,65 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Show most recently modified files.
+
+rf() {
+	if [ -z "$FD_CMD" ]; then
+		printf "Error: FD_CMD is not set\n" >&2
+		return 1
+	fi
+
+	count=20
+	mode="-f"
+	dir="."
+
+	while getopts "n:fda" opt; do
+		case "$opt" in
+			a) mode="-a" ;;
+			d) mode="-d" ;;
+			f) mode="-f" ;;
+			n)
+				if ! [ "$OPTARG" ] || ! echo "$OPTARG" | grep -qE '^[0-9]+$'; then
+					printf "Error: -n must be followed by a number\n" >&2
+					return 1
+				fi
+				count="$OPTARG"
+				;;
+
+			*) printf "Usage: rf [-a | -d | -f] [-n count] [directory]\n"; return 1 ;;
+		esac
+	done
+	shift $((OPTIND - 1))
+
+	# If a non-option argument is provided, it's the directory
+	if [ "$#" -gt 0 ]; then
+		dir="$1"
+	fi
+
+	# Determine type switch
+	case "$mode" in
+		-a) type_switch="" ;;
+		-d) type_switch="$FD_DIR" ;;
+		-f) type_switch="$FD_FILE" ;;
+		*) printf "Error: Invalid option: %s\n" "$mode" >&2 ; return 1 ;;
+	esac
+
+	# Find files/directories using either fd or find
+	if [ "$FD_CMD" = "fdfind" ] || [ "$FD_CMD" = "fd" ]; then
+		$FD_CMD . "$dir" $type_switch --exclude .git/ --follow --hidden --exec stat --format='%Y %n' |
+			sort -nr | head -n "$count" | while IFS= read -r line; do
+				t=${line%% *}
+				f=${line#* }
+				printf "\033[36m%s\033[0m %s\n" "$(date -d @$t '+%Y-%m-%d %H:%M:%S')" "$f"
+			done
+	else
+		find "$dir" $type_switch -not -path */.git -not -path */.git/* -exec stat --format='%Y %n' {} \; |
+			sort -nr | head -n "$count" | while IFS= read -r line; do
+				t=${line%% *}
+				f=${line#* }
+				printf "\033[36m%s\033[0m %s\n" "$(date -d @$t '+%Y-%m-%d %H:%M:%S')" "$f"
+			done
+	fi
+}
+
+rf "$@"
+

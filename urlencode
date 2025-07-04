@@ -1,0 +1,30 @@
+#!/bin/sh
+# Based on Rosetta Code: https://rosettacode.org/wiki/URL_encoding#UNIX_Shell
+
+urlencode() {
+	input=$1
+	encoded=""
+	i=1
+
+	while [ "$i" -le "${#input}" ]; do
+		c=$(printf '%s' "$input" | cut -c"$i")
+		case "$c" in
+			[a-zA-Z0-9.~_-])
+				encoded="${encoded}${c}"
+				;;
+			' ')
+				encoded="${encoded}+"
+				;;
+			*)
+				hex=$(printf '%%%02X' "'$c")
+				encoded="${encoded}${hex}"
+				;;
+		esac
+		i=$((i + 1))
+	done
+
+	printf '%s\n' "$encoded"
+}
+
+urlencode "$@"
+

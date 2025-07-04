@@ -1,0 +1,26 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# Update arkenfox across multiple Firefox profiles.
+
+arkenfox_update() {
+	if is-wsl; then
+		if tasklist.exe | grep -i "firefox" >/dev/null; then
+			printf "Error: Firefox is running.  Skipping arkenfox update.\n"
+			return 1
+		fi
+		ff_dir="/mnt/c/Users/$WIN_USERNAME/AppData/Roaming/Mozilla/Firefox/Profiles"
+	else
+		if pgrep "firefox" >/dev/null; then
+			printf "Error: Firefox is running.  Skipping arkenfox update.\n" >&2
+			return 1
+		fi
+		ff_dir="$HOME/.mozilla/firefox/"
+	fi
+
+	for d in "$ff_dir"/*/ ; do
+		(cd "$d" && ./updater.sh -us && ./prefsCleaner.sh -s)
+	done
+}
+
+arkenfox_update
+

@@ -1,0 +1,14 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# A wsl-open wrapper that supports multiple arguments.
+# Thanks to August Valera: https://gitlab.com/4U6U57/wsl-open
+
+# Open file(s) with default Windows program
+wo() {
+	for arg in "$@"; do
+		wsl-open "$arg" &
+	done
+}
+
+wo "$@"
+

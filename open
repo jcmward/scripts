@@ -1,0 +1,197 @@
+#!/bin/bash
+# Jon Ward, 2024-2025.
+# A no-nonsense file opener.  Opens files sensibly and predictably, typically
+# without resort to `xdg-open`.  Based purely on file extensions for
+# simplicity.  No need for `.desktop` entries.  Works well on WSL.
+
+# TODO:
+#	- Enable parallel opening for different filetype categories.
+#	- Rewrite in Rust or C.
+
+# BROWSER=${BROWSER:-firefox}
+# EXTRACTOR=${EXTRACTOR:-dtrx --noninteractive --one-entry here --verbose}
+GUI_FILE_MANAGER=${GUI_FILE_MANAGER:-yazi}
+MEDIA_PLAYER=${MEDIA_PLAYER:-mpv}
+READER=${READER:-zathura}
+VISUAL=${VISUAL:-vim}
+
+# Check if the file has a given extension
+is_filetype() {
+	local file="$1"
+	local -n types="$2"
+	local file_extension="${file##*.}"
+
+	if [[ "$file" == "$file_extension" ]]; then
+		return 1
+	fi
+
+	file_extension="${file_extension,,}"
+
+	for extension in "${types[@]}"; do
+		if [[ "$file_extension" == "$extension" ]]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+# Open file(s)
+open() {
+	if [ $# -eq 0 ]; then
+		echo "Usage: $(basename $0) [file]"
+		return 1
+	fi
+
+	local audio_types=(
+		"aac" "ac3" "adt" "adts" "aif" "aiff" "ape" "au" "axa" "cue" "dts"
+		"dts-hd" "dtshd" "flac" "flc" "m3u" "m3u8" "m4a" "m4b" "mid" "midi"
+		"mka" "mp1" "mp2" "mp3" "mpa" "mpc" "mpe" "oga" "ogg" "ogm" "ogx"
+		"opus" "pcm" "pls" "ra" "spx" "wav" "wma" "xsp"
+	)
+
+	local video_types=(
+		"264" "265" "3gp" "amv" "anx" "asf" "asx" "avi" "avif" "avifs" "axv"
+		"bik" "cgm" "divx" "dl" "dv" "dvr" "dvr-ms" "emf" "evo" "evob" "flc"
+		"fli" "flv" "gl" "h264" "h265" "hevc" "m2v" "m4v" "mk3d" "mkv" "mov"
+		"mp4" "mp4v" "mpeg" "mpg" "mpg4" "mts" "nuv" "ogm" "ogv" "ogx" "pak"
+		"qt" "ra" "rm" "rmvb" "vob" "webm" "wmv" "xcf" "xwd" "yuv"
+	)
+
+	local image_types=(
+		"apng" "bmp" "gif" "heic" "heif" "ico" "icon" "j2k" "jp2" "jpe" "jpeg"
+		"jpf" "jpg" "jpm" "jpx" "jxl" "mng" "pbm" "pcx" "pgm" "png" "ppm"
+		"psd" "svg" "svgz" "tga" "tif" "tiff" "webp" "xbm" "xp" "xpm"
+	)
+
+	local reader_types=(
+		"cb7" "cba" "cbr" "cbt" "cbz" "djv" "djvu" "eps" "epsf" "epsi" "epub"
+		"mobi" "oxps" "pdf" "ps" "xod" "xps"
+	)
+
+	local office_types=(
+		"doc" "docm" "docx" "dot" "dotx" "gnm" "mml" "odd" "odf" "odg" "odp"
+		"ods" "odt" "otg" "otp" "ots" "ott" "ppt" "pptm" "pptx" "rtf" "sxc"
+		"xls" "xlsm" "xlsx" "xlt" "xltx" "xlw"
+	)
+
+	local archive_types=(
+		"7z" "arj" "bz2" "cab" "cpio" "deb" "gem" "gz" "lrz" "lz" "lz4" "lzh"
+		"lzma" "rar" "rpm" "tar" "tbz2" "tgz" "tlz" "txz" "xz" "z" "zip" "zst"
+	)
+
+	local directories=()
+	local audio_files=()
+	local video_files=()
+	local image_files=()
+	local reader_files=()
+	local office_files=()
+	local archive_files=()
+	local other_files=()
+	local special_files=()
+	local broken_symlinks=()
+	local nonexistent_files=()
+
+	for file in "$@"; do
+		if [ -d "$file" ]; then
+			directories+=("$file")
+		elif [ -L "$file" ] && [ ! -e "$file" ]; then
+			broken_symlinks+=("$file")
+		elif [ -f "$file" ] || [ -L "$file" ]; then
+			if is_filetype "$file" audio_types; then
+				audio_files+=("$file")
+			elif is_filetype "$file" video_types; then
+				video_files+=("$file")
+			elif is_filetype "$file" image_types; then
+				image_files+=("$file")
+			elif is_filetype "$file" reader_types; then
+				reader_files+=("$file")
+			elif is_filetype "$file" office_types; then
+				office_files+=("$file")
+			elif is_filetype "$file" archive_types; then
+				archive_files+=("$file")
+			else
+				other_files+=("$file")
+			fi
+		elif [ -b "$file" ] || [ -c "$file" ] || [ -p "$file" ] || [ -S "$file" ]; then
+			special_files+=("$file")
+		elif [ ! -e "$file" ]; then
+			nonexistent_files+=("$file")
+		fi
+	done
+
+	echo "open:"
+	[[ ${#directories[@]} -gt 0 ]] && echo -e "Directories: ${directories[*]}"
+	[[ ${#audio_files[@]} -gt 0 ]] && echo -e "Audio files: ${audio_files[*]}"
+	[[ ${#video_files[@]} -gt 0 ]] && echo -e "Video files: ${video_files[*]}"
+	[[ ${#image_files[@]} -gt 0 ]] && echo -e "Image files: ${image_files[*]}"
+	[[ ${#reader_files[@]} -gt 0 ]] && echo -e "Reader files: ${reader_files[*]}"
+	[[ ${#office_files[@]} -gt 0 ]] && echo -e "Office files: ${office_files[*]}"
+	[[ ${#archive_files[@]} -gt 0 ]] && echo -e "Archive files: ${archive_files[*]}"
+	[[ ${#other_files[@]} -gt 0 ]] && echo -e "Other files: ${other_files[*]}"
+	[[ ${#special_files[@]} -gt 0 ]] && echo -e "Special files: ${special_files[*]}"
+	[[ ${#broken_symlinks[@]} -gt 0 ]] && echo -e "Broken symlinks: ${broken_symlinks[*]}"
+	[[ ${#nonexistent_files[@]} -gt 0 ]] && echo -e "Nonexistent files: ${nonexistent_files[*]}"
+
+	if is-wsl; then
+		if [ "${#directories[@]}" -gt 0 ]; then
+			wo "${directories[@]}" &
+		fi
+
+		if [[ ${#reader_files[@]} -gt 0 ]]; then
+			wo "${reader_files[@]}" &
+		fi
+
+		if [[ ${#office_files[@]} -gt 0 ]]; then
+			wo "${office_files[@]}" &
+		fi
+	else
+		if [ "${#directories[@]}" -gt 0 ]; then
+			$GUI_FILE_MANAGER "${directories[@]}" &
+		fi
+
+		if [[ ${#reader_files[@]} -gt 0 ]]; then
+			$READER "${reader_files[@]}" &
+		fi
+
+		if [[ ${#office_files[@]} -gt 0 ]]; then
+			if command -v libreoffice >/dev/null 2>&1; then
+				libreoffice "${office_files[@]}"
+			else
+				for file in "${office_files[@]}"; do
+					xdg-open "$file" &
+				done
+			fi
+		fi
+	fi
+
+	if [[ ${#video_files[@]} -gt 0 || ${#audio_files[@]} -gt 0 ]]; then
+		"$MEDIA_PLAYER" "${video_files[@]}" "${audio_files[@]}" &
+	fi
+
+	if [[ ${#image_files[@]} -gt 0 ]]; then
+		"$MEDIA_PLAYER" "${image_files[@]}" &
+	fi
+
+	# if [ "${#archive_files[@]}" -gt 0 ]; then
+	# 	$EXTRACTOR "${archive_files[@]}"
+	# fi
+
+	if [ "${#other_files[@]}" -gt 0 ]; then
+		$VISUAL "${other_files[@]}" </dev/tty
+	fi
+
+	if [ "${#special_files[@]}" -gt 0 ]; then
+		echo "Warning: These are special files and will not be opened: ${special_files[*]}"
+	fi
+
+	if [ "${#broken_symlinks[@]}" -gt 0 ]; then
+		echo "Warning: These symlinks are broken: ${broken_symlinks[*]}"
+	fi
+
+	if [ "${#nonexistent_files[@]}" -gt 0 ]; then
+		echo "Warning: These files do not exist: ${nonexistent_files[*]}"
+	fi
+}
+
+open "$@"
+

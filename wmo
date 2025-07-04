@@ -1,0 +1,19 @@
+#!/bin/bash
+# Jon Ward, 2024.
+# Mount a drive in WSL.
+
+wmo() {
+	if [ -z "$1" ] || [ ${#1} -ne 1 ]; then
+		printf "Error: please provide a single-character drive letter\n" >&2
+		return 1
+	fi
+
+	sudo mount -t drvfs "${1^^}": /mnt/"${1}"
+
+	if [ -d "/mnt/${1}/Files" ]; then
+		cd "/mnt/${1}/Files"
+	fi
+}
+
+wmo "$@"
+

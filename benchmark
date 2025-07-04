@@ -1,0 +1,68 @@
+#!/bin/sh
+# Jon Ward, 2025
+# Print some system benchmarks (to both stdout and a timestamped file).
+#
+# Prerequisites: sudo apt install sysbench screenfetch
+#
+# If the script is interrupted or otherwise fails to clean up its test files,
+# then run: sysbench fileio cleanup
+
+NUM_THREADS=4
+MORE_THREADS=64
+OUTPUT_FILE="benchmark_$(date '+%Y-%m-%d_%H-%M-%S').txt"
+
+# Function to print section headers
+print_section() {
+	printf "\n\n==================== %s ====================\n\n" "$1"
+}
+
+# Function to run a test in both single-threaded and multi-threaded modes
+run_dual_test() {
+	LABEL="$1"
+	CMD="$2"
+	THREADS="$3"
+
+	print_section "$LABEL (Single-threaded)"
+	$CMD --threads=1 run
+
+	print_section "$LABEL (${THREADS} threads)"
+	$CMD --threads="$THREADS" run
+}
+
+# Capture overall start time
+START_TIME=$(date +%s)
+
+# Start logging
+{
+	echo "System Benchmark Summary"
+	echo "Generated on: $(date)"
+	echo
+
+	print_section "System Info (screenfetch)"
+	screenfetch -N
+
+	run_dual_test "CPU Benchmark" "sysbench cpu --cpu-max-prime=20000" $NUM_THREADS
+
+	run_dual_test "Memory Benchmark" "sysbench memory --memory-total-size=2G" $NUM_THREADS
+
+	print_section "File I/O Benchmark (Single-threaded)"
+	echo "Preparing file I/O test files..."
+	sysbench fileio --file-total-size=1G prepare
+	sysbench fileio --file-total-size=1G --file-test-mode=rndrw --max-time=30 --max-requests=0 --threads=1 run
+
+	print_section "File I/O Benchmark (${NUM_THREADS} threads)"
+	sysbench fileio --file-total-size=1G --file-test-mode=rndrw --max-time=30 --max-requests=0 --threads=${NUM_THREADS} run
+	echo "Cleaning up file I/O test files..."
+	sysbench fileio cleanup
+
+	run_dual_test "Mutex Benchmark" "sysbench mutex --time=20" $NUM_THREADS
+
+	run_dual_test "Threads Benchmark" "sysbench threads --time=20" $MORE_THREADS
+
+	printf "\nBenchmark completed on %s.\n" "$(date)"
+	echo "Total benchmark time: $TOTAL_TIME seconds"
+
+} | tee "$OUTPUT_FILE"
+
+printf "\nBenchmark results saved to: %s\n" "$OUTPUT_FILE"
+

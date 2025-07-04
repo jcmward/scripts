@@ -1,0 +1,27 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Get general information about a command.
+
+wi() {
+	if [ -z "$1" ]; then
+		printf "Usage: wi <command>\n"
+		return 1
+	fi
+
+	printf "type:       "
+	type "$1" | sed '2,$s/^/            /'
+
+	printf "whatis:     "
+	whatis "$1" | sed '2,$s/^/            /'
+
+	printf "whereis:    "
+	whereis "$1" | sed '2,$s/^/            /'
+
+	printf "which:      "
+	which "$1" | sed '2,$s/^/            /'
+
+	printf "\n"
+}
+
+wi "$@"
+

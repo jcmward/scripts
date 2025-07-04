@@ -1,0 +1,25 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Extract all archives in given directories.
+
+EXTRACTOR="${EXTRACTOR:-dtrx --noninteractive --one-entry here --verbose}"
+
+xa() {
+	# Default to current directory if no arguments given
+	for dir in "${@:-.}"; do
+		for file in $(reg_files "$dir"); do
+			case "$file" in
+				*.7z|*.arj|*.bz2|*.cab|*.cpio|*.deb|*.gem|*.gz|*.lrz|*.lz|\
+				*.lz4| *.lzh|*.lzma|*.rar|*.rpm|*.tar|*.tbz2|*.tgz|*.tlz|\
+				*.txz|*.xz|*.z| *.zip|*.zst)
+					if $EXTRACTOR $file; then
+						trash-put $file
+					fi
+					;;
+			esac
+		done
+	done
+}
+
+xa "$@"
+

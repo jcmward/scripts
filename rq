@@ -1,0 +1,57 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# A simple alternative to httpie.  Sends an HTTP request with cURL and formats
+# the response with jq.
+
+rq() {
+	# Ensure that at least one argument (the URL) is provided
+	if [ $# -lt 1 ]; then
+		printf "Usage: rq [HTTP method] <URL> [JSON data]\n"
+		return 1
+	fi
+
+	METHOD="GET"
+	URL=""
+	DATA=""
+
+	# Capture arguments: HTTP method, URL, and data (if provided)
+	if [ "$#" -eq 1 ]; then
+		# Only URL is provided, assume GET
+		URL="$1"
+	else
+		# Check if first arg is a standard method
+		case "$(printf "%s" "$1" | tr '[:lower:]' '[:upper:]')" in
+			GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)
+				METHOD=$(printf "%s" "$1" | tr '[:lower:]' '[:upper:]')
+				URL="$2"
+				shift 2
+				;;
+			*)
+				# First arg is not a standard method; assume GET
+				URL="$1"
+				shift
+				;;
+		esac
+	fi
+
+	if [ "$#" -gt 0 ]; then
+		DATA="$*"
+	fi
+
+	# Warn if using GET with a body
+	if [ "$METHOD" = "GET" ] && [ -n "$DATA" ]; then
+		printf "Warning: Sending a GET request with a body.  This is discouraged.\n" >&2
+	fi
+
+	# Build the cURL command
+	if [ -n "$DATA" ]; then
+		curl -s -X "$METHOD" "$URL" \
+			-H "Content-Type: application/json" \
+			-d "$DATA" | jq .
+	else
+		curl -s -X "$METHOD" "$URL" | jq .
+	fi
+}
+
+rq "$@"
+

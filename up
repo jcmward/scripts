@@ -1,0 +1,97 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Upgrade all the things: packages, yt-dlp, arkenfox, Rust crates, and WSL.
+
+print_error() {
+	printf "Error: $@\n" >&2
+}
+
+print_line() {
+	printf "\n------------------------------------------------------------\n"
+}
+
+pretty_print() {
+	printf "\033[1;33m"
+	print_line
+	timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+	printf "[%s] %s" "$timestamp" "$@"
+	print_line
+	printf "\033[0m"
+}
+
+upgrade() {
+	# Deterimine package manager
+	if command -v apt >/dev/null 2>&1; then
+		update_cmd="apt update"
+		upgrade_cmd="apt upgrade -y"
+	elif command -v dnf >/dev/null 2>&1; then
+		update_cmd="dnf update"
+		upgrade_cmd="dnf upgrade -y"
+	elif command -v yum >/dev/null 2>&1; then
+		update_cmd="yum update"
+		upgrade_cmd="yum upgrade -y"
+	elif command -v zypper >/dev/null 2>&1; then
+		update_cmd="zypper refresh"
+		upgrade_cmd="zypper update -y"
+	elif command -v pacman >/dev/null 2>&1; then
+		update_cmd="pacman -Syu --noconfirm"
+		upgrade_cmd="pacman -Syu --noconfirm"
+	elif command -v apk >/dev/null 2>&1; then
+		update_cmd="apk update"
+		upgrade_cmd="apk upgrade"
+	else
+		print_error "No supported package manager found."
+		# return 1
+	fi
+
+	pretty_print "Updating packages..."
+	sudo $update_cmd
+	sudo $upgrade_cmd
+
+	pretty_print "Updating yt-dlp..."
+	if command -v yt-dlp >/dev/null 2>&1; then
+		yt-dlp --update --no-batch-file
+	else
+		print_error "yt-dlp not found.	Skipping."
+	fi
+
+	pretty_print "Updating arkenfox..."
+	if command -v arkenfox-update >/dev/null 2>&1; then
+		arkenfox-update
+	elif [ -x $HOME/.config/shell/scripts/arkenfox-update ]; then
+		$HOME/.config/shell/scripts/arkenfox-update
+	else
+		print_error "No arkenfox update script found.  Skipping."
+	fi
+
+	pretty_print "Updating crates..."
+	if command -v cargo >/dev/null 2>&1; then
+		cargo install-update -a
+	else
+		print_error "cargo not found.  Skipping."
+	fi
+
+	# This must come last, because it will kill WSL
+	if is-wsl; then
+		pretty_print "Updating WSL..."
+		if command -v cmd.exe >/dev/null 2>&1; then
+			wsl.exe --update
+		else
+			print_error "wsl.exe not found.  Skipping."
+		fi
+
+		# This should only ever be run in an elevated command prompt.
+		# Otherwise it will be an infuriatingly manual process thanks
+		# to Windows UAC.
+		#
+		# pretty_print "Updating winget packages..."
+		# if command -v winget.exe >/dev/null 2>&1; then
+		#	  winget.exe upgrade --all
+		# else
+		#	  print_error "winget.exe not found.  Skipping."
+		# fi
+	fi
+}
+
+upgrade
+

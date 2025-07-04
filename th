@@ -1,0 +1,28 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# Copy primary password and launch Thunderbird.
+
+launch_thunderbird() {
+	# Set password-store to main
+	PASSWORD_STORE_TOMB_FILE="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb"
+	PASSWORD_STORE_TOMB_KEY="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb.key"
+	PASSWORD_STORE_DIR="${PASS_HOME:-$HOME/.local/share/pass}/main"
+
+	# Open password-store if not already
+	if ! [ -f "${PASS_HOME:-$HOME/.local/share/pass}/main/thunderbird/primary.gpg" ]; then
+		sudo swapoff -a
+		pass open --verbose
+		sudo swapon -a
+	fi
+
+	pass --clip thunderbird/primary
+
+	if is-wsl; then
+		"/mnt/c/Program Files/Mozilla Thunderbird/thunderbird.exe" &
+	else
+		thunderbird &
+	fi
+}
+
+launch_thunderbird
+

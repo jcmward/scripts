@@ -1,0 +1,9 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# A workaround for a very annoying Thunderbird bug... from 2004.
+#	- https://bugzilla.mozilla.org/show_bug.cgi?id=275547
+#	- https://bugzilla.mozilla.org/show_bug.cgi?id=1778449
+
+# Force-kill Thunderbird.  See: $HOME/.config/shell/scripts/fk
+fk "thunderbird"
+

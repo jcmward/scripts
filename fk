@@ -1,0 +1,64 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Force-kill a process in either Linux or WSL.
+
+is_alive() {
+	if is-wsl; then
+		tasklist.exe /FI "IMAGENAME EQ $1" | grep -q "$1"
+	else
+		pgrep -x "$1" >/dev/null
+	fi
+
+	return $?
+}
+
+force_kill() {
+	if [ $# -eq 0 ]; then
+		printf "Usage: %s [process]\n" "$(basename $0)"
+		return 1
+	fi
+
+	PROCESS="$1"
+	SLEEP_TIME=1
+	TRIES=1
+
+	# Check if WSL
+	if is-wsl; then
+		PROCESS="$PROCESS.exe"
+		KILL_CMD="taskkill.exe /T /IM $PROCESS"
+		FORCE_KILL_CMD="taskkill.exe /F /T /IM $PROCESS"
+	else
+		KILL_CMD="pkill -x $PROCESS"
+		FORCE_KILL_CMD="$KILL_CMD -9"
+	fi
+
+	# Terminate gracefully
+	i=1
+	while [ "$i" -le "$TRIES" ]; do
+		printf "Attempt $i: Closing ${PROCESS}...\n"
+		$KILL_CMD
+		sleep $SLEEP_TIME
+
+		if ! is_alive "$PROCESS"; then
+			printf "${PROCESS} terminated.\n"
+			return 0
+		fi
+
+		i=$((i + 1))
+	done
+
+	# Terminate forcefully
+	printf "\nGraceful termination failed.	Force killing...\n"
+	$FORCE_KILL_CMD
+
+	if is_alive "$PROCESS"; then
+		printf "Error: Failed to terminate ${PROCESS}.\n" >&2
+		return 1
+	else
+		printf "${PROCESS} terminated.\n"
+		return 0
+	fi
+}
+
+force_kill "$@"
+
