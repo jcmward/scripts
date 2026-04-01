@@ -48,7 +48,7 @@ color_test() {
 
 	printf "\ntput colors\n"
 	for color in {0..255}; do
-		tput setab $color
+		tput setab "$color"
 		echo -n "$color "
 	done
 	tput sgr0

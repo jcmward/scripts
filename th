@@ -2,11 +2,16 @@
 # Jon Ward, 2024.
 # Copy primary password and launch Thunderbird.
 
+. "$HOME/.config/shell/lib/system.sh"
+
 launch_thunderbird() {
 	# Set password-store to main
-	PASSWORD_STORE_TOMB_FILE="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb"
-	PASSWORD_STORE_TOMB_KEY="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb.key"
+	# shellcheck disable=SC2034
 	PASSWORD_STORE_DIR="${PASS_HOME:-$HOME/.local/share/pass}/main"
+	# shellcheck disable=SC2034
+	PASSWORD_STORE_TOMB_FILE="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb"
+	# shellcheck disable=SC2034
+	PASSWORD_STORE_TOMB_KEY="${PASS_HOME:-$HOME/.local/share/pass}/pass-main.tomb.key"
 
 	# Open password-store if not already
 	if ! [ -f "${PASS_HOME:-$HOME/.local/share/pass}/main/thunderbird/primary.gpg" ]; then
@@ -17,7 +22,7 @@ launch_thunderbird() {
 
 	pass --clip thunderbird/primary
 
-	if is-wsl; then
+	if is_wsl; then
 		"/mnt/c/Program Files/Mozilla Thunderbird/thunderbird.exe" &
 	else
 		thunderbird &

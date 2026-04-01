@@ -1,0 +1,19 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Backdate a Git commit with the given date.
+# Inspired by: https://github.com/rixx/git-backdate
+
+git_date_commit() {
+	if [ $# -lt 1 ]; then
+		printf "Usage: %s <ISO-8601-date> [git commit options]\n" "$(basename "$0")" >&2
+		return 1
+	fi
+
+	date="$1"
+	shift
+
+	GIT_AUTHOR_DATE="$date" GIT_COMMITTER_DATE="$date" git commit "$@"
+}
+
+git_date_commit "$@"
+

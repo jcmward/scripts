@@ -4,9 +4,7 @@
 # without resort to `xdg-open`.  Based purely on file extensions for
 # simplicity.  No need for `.desktop` entries.  Works well on WSL.
 
-# TODO:
-#	- Enable parallel opening for different filetype categories.
-#	- Rewrite in Rust or C.
+. "$HOME/.config/shell/lib/system.sh"
 
 # BROWSER=${BROWSER:-firefox}
 # EXTRACTOR=${EXTRACTOR:-dtrx --noninteractive --one-entry here --verbose}
@@ -38,10 +36,11 @@ is_filetype() {
 # Open file(s)
 open() {
 	if [ $# -eq 0 ]; then
-		echo "Usage: $(basename $0) [file]"
+		printf "Usage: %s [file]\n" "$(basename "$0")"
 		return 1
 	fi
 
+	# shellcheck disable=SC2034
 	local audio_types=(
 		"aac" "ac3" "adt" "adts" "aif" "aiff" "ape" "au" "axa" "cue" "dts"
 		"dts-hd" "dtshd" "flac" "flc" "m3u" "m3u8" "m4a" "m4b" "mid" "midi"
@@ -49,6 +48,7 @@ open() {
 		"opus" "pcm" "pls" "ra" "spx" "wav" "wma" "xsp"
 	)
 
+	# shellcheck disable=SC2034
 	local video_types=(
 		"264" "265" "3gp" "amv" "anx" "asf" "asx" "avi" "avif" "avifs" "axv"
 		"bik" "cgm" "divx" "dl" "dv" "dvr" "dvr-ms" "emf" "evo" "evob" "flc"
@@ -57,23 +57,27 @@ open() {
 		"qt" "ra" "rm" "rmvb" "vob" "webm" "wmv" "xcf" "xwd" "yuv"
 	)
 
+	# shellcheck disable=SC2034
 	local image_types=(
 		"apng" "bmp" "gif" "heic" "heif" "ico" "icon" "j2k" "jp2" "jpe" "jpeg"
 		"jpf" "jpg" "jpm" "jpx" "jxl" "mng" "pbm" "pcx" "pgm" "png" "ppm"
 		"psd" "svg" "svgz" "tga" "tif" "tiff" "webp" "xbm" "xp" "xpm"
 	)
 
+	# shellcheck disable=SC2034
 	local reader_types=(
 		"cb7" "cba" "cbr" "cbt" "cbz" "djv" "djvu" "eps" "epsf" "epsi" "epub"
 		"mobi" "oxps" "pdf" "ps" "xod" "xps"
 	)
 
+	# shellcheck disable=SC2034
 	local office_types=(
 		"doc" "docm" "docx" "dot" "dotx" "gnm" "mml" "odd" "odf" "odg" "odp"
 		"ods" "odt" "otg" "otp" "ots" "ott" "ppt" "pptm" "pptx" "rtf" "sxc"
 		"xls" "xlsm" "xlsx" "xlt" "xltx" "xlw"
 	)
 
+	# shellcheck disable=SC2034
 	local archive_types=(
 		"7z" "arj" "bz2" "cab" "cpio" "deb" "gem" "gz" "lrz" "lz" "lz4" "lzh"
 		"lzma" "rar" "rpm" "tar" "tbz2" "tgz" "tlz" "txz" "xz" "z" "zip" "zst"
@@ -119,21 +123,21 @@ open() {
 		fi
 	done
 
-	echo "open:"
-	[[ ${#directories[@]} -gt 0 ]] && echo -e "Directories: ${directories[*]}"
-	[[ ${#audio_files[@]} -gt 0 ]] && echo -e "Audio files: ${audio_files[*]}"
-	[[ ${#video_files[@]} -gt 0 ]] && echo -e "Video files: ${video_files[*]}"
-	[[ ${#image_files[@]} -gt 0 ]] && echo -e "Image files: ${image_files[*]}"
-	[[ ${#reader_files[@]} -gt 0 ]] && echo -e "Reader files: ${reader_files[*]}"
-	[[ ${#office_files[@]} -gt 0 ]] && echo -e "Office files: ${office_files[*]}"
-	[[ ${#archive_files[@]} -gt 0 ]] && echo -e "Archive files: ${archive_files[*]}"
-	[[ ${#other_files[@]} -gt 0 ]] && echo -e "Other files: ${other_files[*]}"
-	[[ ${#special_files[@]} -gt 0 ]] && echo -e "Special files: ${special_files[*]}"
-	[[ ${#broken_symlinks[@]} -gt 0 ]] && echo -e "Broken symlinks: ${broken_symlinks[*]}"
-	[[ ${#nonexistent_files[@]} -gt 0 ]] && echo -e "Nonexistent files: ${nonexistent_files[*]}"
+	# echo "open:"
+	# [[ ${#directories[@]} -gt 0 ]] && echo -e "Directories: ${directories[*]}"
+	# [[ ${#audio_files[@]} -gt 0 ]] && echo -e "Audio files: ${audio_files[*]}"
+	# [[ ${#video_files[@]} -gt 0 ]] && echo -e "Video files: ${video_files[*]}"
+	# [[ ${#image_files[@]} -gt 0 ]] && echo -e "Image files: ${image_files[*]}"
+	# [[ ${#reader_files[@]} -gt 0 ]] && echo -e "Reader files: ${reader_files[*]}"
+	# [[ ${#office_files[@]} -gt 0 ]] && echo -e "Office files: ${office_files[*]}"
+	# [[ ${#archive_files[@]} -gt 0 ]] && echo -e "Archive files: ${archive_files[*]}"
+	# [[ ${#other_files[@]} -gt 0 ]] && echo -e "Other files: ${other_files[*]}"
+	# # [[ ${#special_files[@]} -gt 0 ]] && echo -e "Special files: ${special_files[*]}"
+	# # [[ ${#broken_symlinks[@]} -gt 0 ]] && echo -e "Broken symlinks: ${broken_symlinks[*]}"
+	# # [[ ${#nonexistent_files[@]} -gt 0 ]] && echo -e "Nonexistent files: ${nonexistent_files[*]}"
 
-	if is-wsl; then
-		if [ "${#directories[@]}" -gt 0 ]; then
+	if is_wsl; then
+		if [[ "${#directories[@]}" -gt 0 ]]; then
 			wo "${directories[@]}" &
 		fi
 
@@ -145,7 +149,7 @@ open() {
 			wo "${office_files[@]}" &
 		fi
 	else
-		if [ "${#directories[@]}" -gt 0 ]; then
+		if [[ "${#directories[@]}" -gt 0 ]]; then
 			$GUI_FILE_MANAGER "${directories[@]}" &
 		fi
 
@@ -172,23 +176,23 @@ open() {
 		"$MEDIA_PLAYER" "${image_files[@]}" &
 	fi
 
-	# if [ "${#archive_files[@]}" -gt 0 ]; then
-	# 	$EXTRACTOR "${archive_files[@]}"
-	# fi
+	if [ "${#archive_files[@]}" -gt 0 ]; then
+		$EXTRACTOR "${archive_files[@]}"
+	fi
 
-	if [ "${#other_files[@]}" -gt 0 ]; then
+	if [[ "${#other_files[@]}" -gt 0 ]]; then
 		$VISUAL "${other_files[@]}" </dev/tty
 	fi
 
-	if [ "${#special_files[@]}" -gt 0 ]; then
+	if [[ "${#special_files[@]}" -gt 0 ]]; then
 		echo "Warning: These are special files and will not be opened: ${special_files[*]}"
 	fi
 
-	if [ "${#broken_symlinks[@]}" -gt 0 ]; then
+	if [[ "${#broken_symlinks[@]}" -gt 0 ]]; then
 		echo "Warning: These symlinks are broken: ${broken_symlinks[*]}"
 	fi
 
-	if [ "${#nonexistent_files[@]}" -gt 0 ]; then
+	if [[ "${#nonexistent_files[@]}" -gt 0 ]]; then
 		echo "Warning: These files do not exist: ${nonexistent_files[*]}"
 	fi
 }

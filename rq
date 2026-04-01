@@ -10,46 +10,46 @@ rq() {
 		return 1
 	fi
 
-	METHOD="GET"
-	URL=""
-	DATA=""
+	method="GET"
+	url=""
+	data=""
 
 	# Capture arguments: HTTP method, URL, and data (if provided)
 	if [ "$#" -eq 1 ]; then
 		# Only URL is provided, assume GET
-		URL="$1"
+		url="$1"
 	else
 		# Check if first arg is a standard method
 		case "$(printf "%s" "$1" | tr '[:lower:]' '[:upper:]')" in
 			GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)
-				METHOD=$(printf "%s" "$1" | tr '[:lower:]' '[:upper:]')
-				URL="$2"
+				method=$(printf "%s" "$1" | tr '[:lower:]' '[:upper:]')
+				url="$2"
 				shift 2
 				;;
 			*)
 				# First arg is not a standard method; assume GET
-				URL="$1"
+				url="$1"
 				shift
 				;;
 		esac
 	fi
 
 	if [ "$#" -gt 0 ]; then
-		DATA="$*"
+		data="$*"
 	fi
 
 	# Warn if using GET with a body
-	if [ "$METHOD" = "GET" ] && [ -n "$DATA" ]; then
+	if [ "$method" = "GET" ] && [ -n "$data" ]; then
 		printf "Warning: Sending a GET request with a body.  This is discouraged.\n" >&2
 	fi
 
 	# Build the cURL command
-	if [ -n "$DATA" ]; then
-		curl -s -X "$METHOD" "$URL" \
+	if [ -n "$data" ]; then
+		curl -s -X "$method" "$url" \
 			-H "Content-Type: application/json" \
-			-d "$DATA" | jq .
+			-d "$data" | jq .
 	else
-		curl -s -X "$METHOD" "$URL" | jq .
+		curl -s -X "$method" "$url" | jq .
 	fi
 }
 

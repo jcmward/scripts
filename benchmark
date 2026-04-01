@@ -1,5 +1,5 @@
 #!/bin/sh
-# Jon Ward, 2025
+# Jon Ward, 2025.
 # Print some system benchmarks (to both stdout and a timestamped file).
 #
 # Prerequisites: sudo apt install sysbench screenfetch
@@ -7,9 +7,9 @@
 # If the script is interrupted or otherwise fails to clean up its test files,
 # then run: sysbench fileio cleanup
 
-NUM_THREADS=4
-MORE_THREADS=64
-OUTPUT_FILE="benchmark_$(date '+%Y-%m-%d_%H-%M-%S').txt"
+num_threads=4
+more_threads=64
+output_file="benchmark_$(date '+%Y-%m-%d_%H-%M-%S').txt"
 
 # Function to print section headers
 print_section() {
@@ -18,19 +18,19 @@ print_section() {
 
 # Function to run a test in both single-threaded and multi-threaded modes
 run_dual_test() {
-	LABEL="$1"
-	CMD="$2"
-	THREADS="$3"
+	label="$1"
+	cmd="$2"
+	threads="$3"
 
-	print_section "$LABEL (Single-threaded)"
-	$CMD --threads=1 run
+	print_section "$label (Single-threaded)"
+	$cmd --threads=1 run
 
-	print_section "$LABEL (${THREADS} threads)"
-	$CMD --threads="$THREADS" run
+	print_section "$label (${threads} threads)"
+	$cmd --threads="$threads" run
 }
 
 # Capture overall start time
-START_TIME=$(date +%s)
+start_time=$(date +%s)
 
 # Start logging
 {
@@ -41,28 +41,31 @@ START_TIME=$(date +%s)
 	print_section "System Info (screenfetch)"
 	screenfetch -N
 
-	run_dual_test "CPU Benchmark" "sysbench cpu --cpu-max-prime=20000" $NUM_THREADS
+	run_dual_test "CPU Benchmark" "sysbench cpu --cpu-max-prime=20000" $num_threads
 
-	run_dual_test "Memory Benchmark" "sysbench memory --memory-total-size=2G" $NUM_THREADS
+	run_dual_test "Memory Benchmark" "sysbench memory --memory-total-size=2G" $num_threads
 
 	print_section "File I/O Benchmark (Single-threaded)"
 	echo "Preparing file I/O test files..."
 	sysbench fileio --file-total-size=1G prepare
 	sysbench fileio --file-total-size=1G --file-test-mode=rndrw --max-time=30 --max-requests=0 --threads=1 run
 
-	print_section "File I/O Benchmark (${NUM_THREADS} threads)"
-	sysbench fileio --file-total-size=1G --file-test-mode=rndrw --max-time=30 --max-requests=0 --threads=${NUM_THREADS} run
+	print_section "File I/O Benchmark (${num_threads} threads)"
+	sysbench fileio --file-total-size=1G --file-test-mode=rndrw --max-time=30 --max-requests=0 --threads=${num_threads} run
 	echo "Cleaning up file I/O test files..."
 	sysbench fileio cleanup
 
-	run_dual_test "Mutex Benchmark" "sysbench mutex --time=20" $NUM_THREADS
+	run_dual_test "Mutex Benchmark" "sysbench mutex --time=20" $num_threads
 
-	run_dual_test "Threads Benchmark" "sysbench threads --time=20" $MORE_THREADS
+	run_dual_test "Threads Benchmark" "sysbench threads --time=20" $more_threads
 
 	printf "\nBenchmark completed on %s.\n" "$(date)"
-	echo "Total benchmark time: $TOTAL_TIME seconds"
 
-} | tee "$OUTPUT_FILE"
+	end_time=$(date +%s)
+	total_time=$((end_time - start_time))
+	echo "Total benchmark time: $total_time seconds"
 
-printf "\nBenchmark results saved to: %s\n" "$OUTPUT_FILE"
+} | tee "$output_file"
+
+printf "\nBenchmark results saved to: %s\n" "$output_file"
 

@@ -1,7 +1,20 @@
 #!/bin/sh
 # Jon Ward, 2025.
 # A CMake wrapper.  An alternative to this common workflow:
-# mkdir build; cd build; cmake ..; make
+# cmake -S . -B build && cmake --build build
+
+# Find project root by walking upward to CMakeLists.txt
+find_project_root() {
+	dir=$(pwd)
+	while [ "$dir" != "/" ]; do
+		if [ -f "$dir/CMakeLists.txt" ]; then
+			printf "%s\n" "$dir"
+			return 0
+		fi
+		dir="$(dirname "$dir")"
+	done
+	return 1
+}
 
 cm() {
 	# Ensure CMake is installed
@@ -10,23 +23,18 @@ cm() {
 		return 1
 	fi
 
-	# Find project root
-	root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-	printf "Detected project root: %s\n" "$root"
-
-	# Ensure CMakeLists.txt exists
-	if [ ! -f "$root/CMakeLists.txt" ]; then
-		printf "Error: No CMakeLists.txt file found.\n" >&2
+	project_root="$(find_project_root)" || {
+		printf "Error: No CMakeLists.txt found in this directory or any parent.\n" >&2
 		return 1
-	fi
+	}
 
-	# Create and enter build directory
-	build_dir="${CMAKE_BUILD_DIR:-$root/build}"
-	mkdir -p "$build_dir" || return 1
-	cd "$build_dir" || return 1
+	build_dir="${CMAKE_BUILD_DIR:-$project_root/build}"
+
+	printf "Project root: %s\n" "$project_root"
+	printf "Build dir:    %s\n" "$build_dir"
 
 	# Configure and build
-	cmake -S "$root" -B "$build_dir" "$@" || return 1
+	cmake -S "$project_root" -B "$build_dir" "$@" || return 1
 	cmake --build "$build_dir" || return 1
 }
 

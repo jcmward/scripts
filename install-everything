@@ -1,0 +1,34 @@
+#!/bin/sh
+# Jon Ward, 2024-2025.
+# Install all the things
+
+. "$HOME/.config/shell/lib/install-update-helpers.sh"
+
+install_everything() {
+	detect_package_manager || exit 1
+
+	update_system_packages
+	install_system_packages
+	remove_unwanted_system_packages
+
+	install_npm_packages
+	install_rust_toolchain
+	install_rust_crates
+
+	generate_library_ctags
+	install_fzf
+	install_git_prompt
+	install_neovim
+	install_python_pip_completion
+	install_tmux_bash_completion
+	install_yt_dlp
+	install_wsl_open
+	install_nerd_fonts
+
+	if is_wsl; then
+		install_wsl_packages
+	fi
+}
+
+install_everything
+

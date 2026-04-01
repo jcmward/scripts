@@ -5,38 +5,43 @@
 ta() {
 	# Check environment
 	if ! command -v tmux >/dev/null 2>&1; then
-		return 1
+		# printf "Error: tmux not available\n" >&2
+		return 0
 	elif [ -n "$TMUX" ]; then
-		return 1
+		# printf "Error: already using tmux\n" >&2
+		return 0
 	fi
 
 	case "$TERM" in
 		*screen*|*tmux*|linux)
-			return 1
+			# printf "Error: already using tmux\n" >&2
+			return 0
 			;;
 	esac
 
-	SESSION="default"
+	session="default"
 
 	# If session does not exist, create it
-	if ! tmux has-session -t "$SESSION" >/dev/null 2>&1; then
+	if ! tmux has-session -t "$session" >/dev/null 2>&1; then
 		# Note: base-index is 1
-		tmux new-session -d -s "$SESSION" -n "[Music]"
-		tmux send-keys -t "${SESSION}:1" "clear; cd ${FILES_DIR}/Music" C-m
+		tmux new-session -d -s "$session" -n "Shell"
+		tmux split-window -h
+		tmux select-pane -l
+		tmux send-keys -t "$session:1" "clear; cd $FILES_DIR" C-m
 
-		tmux new-window -t "$SESSION" -n "[Notes]"
-		tmux send-keys -t "${SESSION}:2" "clear; n" C-m
+		tmux new-session -t "$session" -n "Notes"
+		tmux send-keys -t "$session:2" "clear; cd $FILES_DIR/Nextcloud/Notes; $VISUAL agenda/work/*" C-m
 
-		tmux new-window -t "$SESSION" -n "[Code]"
-		tmux send-keys -t "${SESSION}:3" "clear; cd ${FILES_DIR}/Nextcloud/Code" C-m
+		tmux new-window -t "$session" -n "Code"
+		tmux send-keys -t "$session:3" "clear; cd $FILES_DIR/Nextcloud/Code" C-m
 
-		tmux new-window -t "$SESSION" -n "[Shell]"
-		tmux send-keys -t "${SESSION}:4" "clear; cd ${FILES_DIR}" C-m
+		tmux new-window -t "$session" -n "Writing"
+		tmux send-keys -t "$session:4" "clear; cd $FILES_DIR/Nextcloud/Code/tex" C-m
 	fi
 
 	# Attach to the session
-	exec tmux attach -t "${SESSION}:1"
+	exec tmux attach-session -t "$session"
 }
 
-ta
+ta "$@"
 

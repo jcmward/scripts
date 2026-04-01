@@ -23,31 +23,31 @@ has_shebang() {
 
 sdp() {
 	# Validate given directory
-	TARGET_DIR="${1:-.}"
-	TARGET_DIR=$(realpath "$TARGET_DIR")
+	target_dir="${1:-.}"
+	target_dir=$(realpath "$target_dir")
 
-	if [ ! -d "$TARGET_DIR" ]; then
-		printf "Error: '$TARGET_DIR' is not a valid directory.\n" >&2
+	if [ ! -d "$target_dir" ]; then
+		printf "Error: '%s' is not a valid directory.\n" "$target_dir" >&2
 		return 1
 	fi
 
 	# Stop if given a critical system directory
 	critical_paths="/ /bin /boot /dev /etc /home /lib /lib64 /media /mnt /opt /proc /root /run /sbin /sys /tmp /usr /var"
 	for path in $critical_paths; do
-		if [ "$TARGET_DIR" = "$path" ]; then
-			printf "Error: Refusing to run on critical system directory '%s'.\n" "$TARGET_DIR" >&2
+		if [ "$target_dir" = "$path" ]; then
+			printf "Error: Refusing to run on critical system directory '%s'.\n" "$target_dir" >&2
 			return 2
 		fi
 	done
 
-	printf "\nSetting directory permissions to 755 in '$TARGET_DIR'...\n"
-	find "$TARGET_DIR" -type d -exec chmod 755 {} +
+	printf "\nSetting directory permissions to 755 in '%s'...\n" "$target_dir"
+	find "$target_dir" -type d -exec chmod 755 {} +
 
-	printf "\nSetting file permissions to 644 in '$TARGET_DIR'...\n"
-	find "$TARGET_DIR" -type f -exec chmod 644 {} +
+	printf "\nSetting file permissions to 644 in '%s'...\n" "$target_dir"
+	find "$target_dir" -type f -exec chmod 644 {} +
 
-	printf "\nSetting file permissions to +x for files with a shebang in '$TARGET_DIR'...\n"
-	find "$TARGET_DIR" -type f | while IFS= read -r file; do
+	printf "\nSetting file permissions to +x for files with a shebang in '%s'...\n" "$target_dir"
+	find "$target_dir" -type f | while IFS= read -r file; do
 		if has_shebang "$file"; then
 			chmod +x "$file"
 		fi

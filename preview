@@ -1,0 +1,10 @@
+#!/bin/sh
+# Jon Ward, 2025.
+# Directory/file previewer for use with fzf.
+
+if [ -d "$1" ]; then
+	$PREVIEW_DIR "$1"
+else
+	$PREVIEW_FILE "$1"
+fi
+

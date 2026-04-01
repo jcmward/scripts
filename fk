@@ -2,8 +2,10 @@
 # Jon Ward, 2025.
 # Force-kill a process in either Linux or WSL.
 
+. "$HOME/.config/shell/lib/system.sh"
+
 is_alive() {
-	if is-wsl; then
+	if is_wsl; then
 		tasklist.exe /FI "IMAGENAME EQ $1" | grep -q "$1"
 	else
 		pgrep -x "$1" >/dev/null
@@ -14,33 +16,38 @@ is_alive() {
 
 force_kill() {
 	if [ $# -eq 0 ]; then
-		printf "Usage: %s [process]\n" "$(basename $0)"
+		printf "Usage: %s [process]\n" "$(basename "$0")"
 		return 1
 	fi
 
-	PROCESS="$1"
-	SLEEP_TIME=1
-	TRIES=1
+	process="$1"
+	sleep_time=1
+	tries=1
 
-	# Check if WSL
-	if is-wsl; then
-		PROCESS="$PROCESS.exe"
-		KILL_CMD="taskkill.exe /T /IM $PROCESS"
-		FORCE_KILL_CMD="taskkill.exe /F /T /IM $PROCESS"
+	if ! is_alive "$process"; then
+		printf "Process '%s' not found.\n" "$process" 
+		return 0
+	fi
+
+	# Check if WSL and set command to kill process accordingly
+	if is_wsl; then
+		process="$process.exe"
+		kill_cmd="taskkill.exe /T /IM $process"
+		force_kill_cmd="taskkill.exe /F /T /IM $process"
 	else
-		KILL_CMD="pkill -x $PROCESS"
-		FORCE_KILL_CMD="$KILL_CMD -9"
+		kill_cmd="pkill -x $process"
+		force_kill_cmd="pkill -9 -x $process"
 	fi
 
 	# Terminate gracefully
 	i=1
-	while [ "$i" -le "$TRIES" ]; do
-		printf "Attempt $i: Closing ${PROCESS}...\n"
-		$KILL_CMD
-		sleep $SLEEP_TIME
+	while [ "$i" -le "$tries" ]; do
+		printf "Attempt %s/%s to terminate '%s'...\n" "$i" "$tries" "$process"
+		$kill_cmd
+		sleep $sleep_time
 
-		if ! is_alive "$PROCESS"; then
-			printf "${PROCESS} terminated.\n"
+		if ! is_alive "$process"; then
+			printf "Process '%s' terminated.\n" "$process" 
 			return 0
 		fi
 
@@ -48,14 +55,14 @@ force_kill() {
 	done
 
 	# Terminate forcefully
-	printf "\nGraceful termination failed.	Force killing...\n"
-	$FORCE_KILL_CMD
+	printf "\nGraceful termination failed.	Force-killing...n"
+	$force_kill_cmd
 
-	if is_alive "$PROCESS"; then
-		printf "Error: Failed to terminate ${PROCESS}.\n" >&2
+	if is_alive "$process"; then
+		printf "Error: Failed to terminate '%s'.\n" "$process" >&2
 		return 1
 	else
-		printf "${PROCESS} terminated.\n"
+		printf "Success: '%s' terminated.\n" "$process"
 		return 0
 	fi
 }

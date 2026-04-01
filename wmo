@@ -3,7 +3,11 @@
 # Mount a drive in WSL.
 
 wmo() {
-	if [ -z "$1" ] || [ ${#1} -ne 1 ]; then
+	# If no argument given, list available drives
+	if [ -z "$1" ]; then
+		cmd.exe /c wmic logicaldisk get name,volumename,filesystem | tr -d '\r'
+		return 0
+	elif [ ${#1} -ne 1 ]; then
 		printf "Error: please provide a single-character drive letter\n" >&2
 		return 1
 	fi
@@ -11,7 +15,7 @@ wmo() {
 	sudo mount -t drvfs "${1^^}": /mnt/"${1}"
 
 	if [ -d "/mnt/${1}/Files" ]; then
-		cd "/mnt/${1}/Files"
+		cd "/mnt/${1}/Files" || return 1
 	fi
 }
 

@@ -1,0 +1,79 @@
+#!/bin/sh
+# Jon Ward, 2024-2025.
+# Setup system configuration
+
+##############################################################################
+# Make scripts executable
+##############################################################################
+
+chmod +x "$HOME/.config/shell/install/*"
+chmod +x "$HOME/.config/shell/scripts/*"
+
+##############################################################################
+# Copy configuration files to relevant directories
+##############################################################################
+
+mkdir -p "$HOME/.old"
+mv "$HOME/.bashrc" "$HOME/.profile" "$HOME/.xscreensaver" "$HOME/.old"
+
+cp -rf "$HOME/.config/other/etc/*" /etc/
+cp -rf "$HOME/.config/other/etc/.*" /etc/
+cp -rf "$HOME/.config/other/home/*" "$HOME"
+cp -rf "$HOME/.config/other/home/.*" "$HOME"
+
+##############################################################################
+# Use templates to create local (untracked) files if they don't already exist
+##############################################################################
+
+copy_if_missing() {
+	target="$1"
+	template="$2"
+
+	if [ ! -f "$target" ]; then
+		cp "$template" "$target"
+		printf "Created %s from template.\n" "$target"
+	else
+		printf "%s already exists, skipping.\n" "$target"
+	fi
+}
+
+copy_if_missing "$HOME/.config/git/local.gitconfig" "$HOME/.config/git/local-template.gitconfig"
+copy_if_missing "$HOME/.config/shell/bashrc.d/local.sh" "$HOME/.config/shell/bashrc.d/local-template.sh"
+copy_if_missing "$HOME/.config/vim/vimrc.d/local.vim" "$HOME/.config/vim/vimrc.d/local-template.vim"
+copy_if_missing "$HOME/.config/yazi/theme.toml" "$HOME/.config/yazi/template-theme.toml"
+copy_if_missing "$HOME/.config/zathura/local.conf" "$HOME/.config/zathura/local-template.conf"
+
+##############################################################################
+# Make needed directories
+##############################################################################
+
+mkdir -p "$HOME/.local/bin"
+
+mkdir -p "$HOME/.local/share/vim/after"
+mkdir -p "$HOME/.local/share/vim/spell"
+mkdir -p "$HOME/.local/state/vim/backup"
+mkdir -p "$HOME/.local/state/vim/sessions"
+mkdir -p "$HOME/.local/state/vim/swap"
+mkdir -p "$HOME/.local/state/vim/undo"
+mkdir -p "$HOME/.local/state/vim/view"
+
+mkdir -p "$HOME/.local/share/nvim/after"
+mkdir -p "$HOME/.local/share/nvim/spell"
+mkdir -p "$HOME/.local/state/nvim/backup"
+mkdir -p "$HOME/.local/state/nvim/sessions"
+mkdir -p "$HOME/.local/state/nvim/swap"
+mkdir -p "$HOME/.local/state/nvim/undo"
+mkdir -p "$HOME/.local/state/nvim/view"
+
+mkdir -p "$HOME/.local/share/calc"
+mkdir -p "$HOME/.local/share/fonts"
+mkdir -p "$HOME/.local/share/fzf"
+mkdir -p "$HOME/.local/share/less"
+mkdir -p "$HOME/.local/share/mysql"
+mkdir -p "$HOME/.local/share/R"
+mkdir -p "$HOME/.local/share/tig"
+mkdir -p "$HOME/.local/share/yt-dlp"
+
+mkdir -p "$HOME/.local/state/bash"
+mkdir -p "$HOME/.local/state/w3m"
+

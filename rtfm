@@ -24,10 +24,10 @@ rtfm() {
 		if info --output="$tempfile" "$cmd" >/dev/null 2>&1 && [ -s "$tempfile" ]; then
 			printf "\nInformation found via 'info %s'.\n" "$cmd"
 			${PAGER:-less} "$tempfile"
-			rm -f "$tempfile"
+			rm -f -- "$tempfile"
 			continue
 		else
-			rm -f "$tempfile"
+			rm -f -- "$tempfile"
 			printf "No info page found for '%s'.\n" "$cmd"
 		fi
 

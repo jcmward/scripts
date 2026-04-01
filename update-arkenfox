@@ -1,0 +1,8 @@
+#!/bin/sh
+# Jon Ward, 2024.
+# Thin wrapper for a library function to update Arkenfox.
+
+. "$HOME/.config/shell/lib/install-update-helpers.sh"
+
+update_arkenfox
+

@@ -45,18 +45,20 @@ rf() {
 
 	# Find files/directories using either fd or find
 	if [ "$FD_CMD" = "fdfind" ] || [ "$FD_CMD" = "fd" ]; then
+		# shellcheck disable=SC2086
 		$FD_CMD . "$dir" $type_switch --exclude .git/ --follow --hidden --exec stat --format='%Y %n' |
 			sort -nr | head -n "$count" | while IFS= read -r line; do
 				t=${line%% *}
 				f=${line#* }
-				printf "\033[36m%s\033[0m %s\n" "$(date -d @$t '+%Y-%m-%d %H:%M:%S')" "$f"
+				printf "\033[36m%s\033[0m %s\n" "$(date -d @"${t}" '+%Y-%m-%d %H:%M:%S')" "$f"
 			done
 	else
-		find "$dir" $type_switch -not -path */.git -not -path */.git/* -exec stat --format='%Y %n' {} \; |
+		# shellcheck disable=SC2086
+		find "$dir" $type_switch -not -path '*/.git' -not -path '*/.git/*' -exec stat --format='%Y %n' {} \; |
 			sort -nr | head -n "$count" | while IFS= read -r line; do
 				t=${line%% *}
 				f=${line#* }
-				printf "\033[36m%s\033[0m %s\n" "$(date -d @$t '+%Y-%m-%d %H:%M:%S')" "$f"
+				printf "\033[36m%s\033[0m %s\n" "$(date -d @"${t}" '+%Y-%m-%d %H:%M:%S')" "$f"
 			done
 	fi
 }

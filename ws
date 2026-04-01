@@ -2,10 +2,9 @@
 # Jon Ward, 2025.
 # Open URLs and/or search queries in the web browser.
 
-# # Suppress output (e.g. errors from cmd.exe)
-# exec 1>/dev/null 2>/dev/null
+. "$HOME/.config/shell/lib/system.sh"
 
-if is-wsl; then
+if is_wsl; then
 	BROWSER='cmd.exe /C start ""'
 else
 	BROWSER=${BROWSER:-firefox}
@@ -22,6 +21,7 @@ is_url() {
 }
 
 open_browser() {
+	# shellcheck disable=SC2086
 	set -- $BROWSER "$1"
 	"$@"
 }
